@@ -162,3 +162,9 @@ docker exec -it de-postgres bash -lc \
 'psql -U "$POSTGRES_USER" -d "$POSTGRES_DB" -c "SELECT COUNT(*) AS total FROM public.testdata;"'
 
 ```
+  
+# Future Improvements
+
+- Add a visual diagram of the pipeline flow
+- Create a shell script to run all commands automatically
+- Implement error handling and exception management
