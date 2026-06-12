@@ -16,28 +16,32 @@ This pipeline consists in:
 
 ## Project structure:
 
-.  
-├─ data/
-├─ db/  
-│  ├─ 01_create_schema.sql  
-│  ├─ 02_create_types.sql
-│  ├─ 03_create_tables.sql
-│  ├─ 04_create_sentiment.sql
-│  ├─ 05_create_processed_tickets.sql
-│  └─ 06_create_views.sql
-├─ env/
-├─ jobs/  
-│  ├─ db_connection.py
-│  ├─ generate_tickets.py
-│  ├─ init_db.py
-│  ├─ ticket_analysis.py
-│  └─ train_model.py   
-├─ models/  
-│  └─ sentiment_model.pkl     
-├─ .env.example
-├─ .gitignore
-├─ requirements.txt  
-└─ README.md  
+## Project Structure
+
+```text
+.
+├── data/
+├── db/
+│   ├── 01_create_schema.sql
+│   ├── 02_create_types.sql
+│   ├── 03_create_tables.sql
+│   ├── 04_create_sentiment.sql
+│   ├── 05_create_processed_tickets.sql
+│   └── 06_create_views.sql
+├── env/
+├── jobs/
+│   ├── db_connection.py
+│   ├── generate_tickets.py
+│   ├── init_db.py
+│   ├── ticket_analysis.py
+│   └── train_model.py
+├── models/
+│   └── sentiment_model.pkl
+├── .env.example
+├── .gitignore
+├── requirements.txt
+└── README.md
+```
 
     
 # .env
