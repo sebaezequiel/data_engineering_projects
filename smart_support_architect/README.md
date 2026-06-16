@@ -53,6 +53,12 @@ This pipeline consists in:
 # Execution order:
 
 1. Create the db manually
+
+```bash
+psql -U postgres
+CREATE DATABASE engineering_solutions;
+```
+
 2. init_db.py (This will create schema, types and tables in PostgreSQL)
 3. generate_tickets.py (This will generate 100 tickets by default in raw_tickets)
 4. ticket_analysis.py (Analyze sentiment with Hugging Face and fill processed_tickets)
