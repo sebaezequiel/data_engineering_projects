@@ -14,8 +14,6 @@ This pipeline consists in:
 - Faker
 
 
-## Project structure:
-
 ## Project Structure
 
 ```text
