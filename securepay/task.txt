@@ -1,0 +1,90 @@
+Documento de Requerimientos de Negocio (BRD)
+Proyecto: Implementación del Data Warehouse y pipeline de Analytics Engineering — FinTech "SecurePay"
+
+Asignado a: Analytics Engineer
+
+Prioridad: Alta
+
+Contexto del Negocio
+La FinTech "SecurePay" procesa miles de transacciones diarias entre recargas de saldo, transferencias y pagos en comercios. El equipo de Operaciones y Riesgo está experimentando un incremento en contracargos (fraudes reportados por usuarios) y transacciones sospechosas, pero no tienen una forma unificada de analizar el comportamiento.
+
+El negocio necesita responder a tres preguntas críticas de forma diaria y automatizada:
+
+¿Cuál es la tasa de éxito de las transacciones por tipo de operación y comercio? (Identificar si hay pasarelas caídas o comercios con fallas técnicas).
+
+¿Cuáles son los patrones de usuarios con alto riesgo de fraude? (Usuarios que realizan múltiples transacciones rechazadas por saldo insuficiente o fondos sospechosos en un lapso muy corto de tiempo).
+
+¿Cuál es el volumen de dinero movilizado por usuarios "VIP" versus usuarios estándar? (Monitorear la concentración del volumen financiero).
+
+El Desafío Técnico
+Debes diseñar e implementar el pipeline analítico completo utilizando herramientas locales y la nube gratuita, asegurando un entorno sin costos ni tarjetas de crédito.
+
+Flujo de Datos del Proyecto
+[ PostgreSQL Local ] (Datos Transaccionales Crudos)
+          │
+          ▼
+[ Apache Airflow Local ] ──> Extrae y guarda en [ Carpeta Local / MinIO ] (Data Lake)
+          │
+          ▼
+[ Google BigQuery Sandbox ] (Data Warehouse Gratuito en la Nube)
+          │
+          ▼
+[ dbt Core (Terminal) ] ──> [ Capa de Modelado y Tablas de Negocio ]
+Fase 1: Configuración de Fuentes (PostgreSQL Local)
+Para simular el entorno de producción, crearás un script en Python que genere datos realistas (puedes usar librerías como Faker o lógica propia) y los inserte en una base de datos PostgreSQL corriendo en Docker.
+
+Las tres tablas de origen que debes poblar son:
+
+users: user_id (PK), name, email, kyc_status (en proceso, aprobado, rechazado), account_type (estándar, premium), created_at.
+
+transactions: transaction_id (PK), account_id, amount (monto), transaction_type (deposit, withdrawal, peer_to_peer), status (approved, declined_insufficient_funds, declined_suspected_fraud), merchant_category (retail, gambling, food, travel), created_at.
+
+user_devices: device_id (PK), user_id, device_os (android, ios, web), ip_address, is_emulator (true/false - indicador crítico de riesgo), updated_at.
+
+Fase 2: Ingesta y Orquestación (Apache Airflow)
+Desarrollarás un DAG en Airflow que automatice el movimiento de datos de forma diaria:
+
+Extracción (E): Conectarse a PostgreSQL local y extraer las transacciones y usuarios del "día anterior" (filtrando por las columnas de fecha).
+
+Almacenamiento Local (L): Guardar estos datos en formato CSV o Parquet en una carpeta local que simule tu Data Lake (ej: /data_lake/raw/transactions/year=2026/month=06/).
+
+Carga al Data Warehouse (L): Utilizar los operadores de Airflow para subir estos archivos a tablas temporales/crudas dentro de tu Google BigQuery Sandbox.
+
+Fase 3: Transformación y Modelado (dbt Core)
+Crearás un proyecto de dbt Core en tu máquina conectado a BigQuery para estructurar la arquitectura de datos:
+
+1. Carpetas de Staging (models/staging/)
+Genera modelos individuales para limpiar las fuentes sin cruzarlas:
+
+Normalizar los nombres de columnas a snake_case.
+
+Convertir los montos a un formato numérico estándar y homogeneizar las zonas horarias de las fechas a UTC.
+
+Añadir validaciones básicas de formato.
+
+2. Carpetas de Modelado Intermedio (models/intermediate/)
+Aquí es donde aplicas la inteligencia del Analytics Engineer para cruzar datos y armar el modelo dimensional:
+
+dim_users: Tabla consolidada que junte los datos de usuario con la información de sus dispositivos (calculando, por ejemplo, cuántos dispositivos diferentes usa un mismo usuario).
+
+fct_transactions: Historial limpio de todas las transacciones financieras con flags rápidos para identificar rechazos por sospecha de fraude.
+
+3. Capa de Negocio / Marts (models/marts/)
+Tablas listas para el consumo del equipo de Riesgo y Dirección:
+
+mart_fraud_risk_daily: Una tabla agregada por user_id y fecha que calcule:
+
+Monto total transaccionado en el día.
+
+Porcentaje de transacciones rechazadas por fraude o saldo insuficiente.
+
+Un flag de high_risk_user: Si el usuario opera desde un emulador (is_emulator = true) y tiene más de un rechazo por sospecha de fraude en el mismo día.
+
+Fase 4: Gobierno y Calidad de Datos
+No consideres el proyecto terminado hasta implementar en el archivo schema.yml:
+
+Tests unique y not_null en las llaves primarias de tus dimensiones y hechos.
+
+Un test de relationships en fct_transactions para garantizar que no existan transacciones de usuarios que no estén registrados en dim_users.
+
+Documentación básica de las tablas de la capa de marts para que cualquier analista entienda qué significa el flag de alto riesgo.
